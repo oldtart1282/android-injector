@@ -2,6 +2,7 @@
 
 A lightweight native injector for Android ARM64 (AArch64) built for Termux. Uses `ptrace` to attach to a remote process, allocate memory via remote `mmap`, write a library path into the target, and call `dlopen` / `dlsym` from within the remote process.
 
+
 ## Tree
 
 ```

@@ -105,13 +105,13 @@ uint64_t get_remote_mmap_addr(pid_t pid) {
     __system_property_get("ro.build.version.sdk", sdk_str);
     int sdk = atoi(sdk_str);
 
-    const char* linker_path = "/apex/com.android.runtime/bin/linker64";
+    const char* libc_path = "/apex/com.android.runtime/lib64/bionic/libc.so";
     if (sdk < 0x18) {
-        linker_path = "/system/bin/linker64";
+        libc_path = "/system/lib64/libc.so";
     }
 
-    uint64_t local_base = find_module_base(-1, linker_path);
-    uint64_t remote_base = find_module_base(pid, linker_path);
+    uint64_t local_base = find_module_base(-1, libc_path);
+    uint64_t remote_base = find_module_base(pid, libc_path);
     if (local_base == 0 || remote_base == 0) return 0;
 
     uint64_t local_func = (uint64_t)mmap;
