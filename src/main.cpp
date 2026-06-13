@@ -151,7 +151,8 @@ int main(int argc, char** argv) {
     printf("[+] Target PID: %d\n", g_target_pid);
     printf("[+] Start Inject with %s\n", g_lib_path);
 
-    if (!inject_process(g_target_pid, g_lib_path, g_symbol_name)) {
+    const char* sym = strlen(g_symbol_name) > 0 ? g_symbol_name : nullptr;
+    if (!inject_process(g_target_pid, g_lib_path, sym)) {
         printf("[-] Inject Erro\n");
         handle_selinux_restore();
         return 1;

@@ -129,15 +129,15 @@ uint64_t get_remote_dlopen_addr(pid_t pid) {
     __system_property_get("ro.build.version.sdk", sdk_str);
     int sdk = atoi(sdk_str);
 
-    const char* linker_path = "/apex/com.android.runtime/bin/linker64";
+    const char* libdl_path = "/apex/com.android.runtime/lib64/bionic/libdl.so";
     if (sdk < 0x18) {
-        linker_path = "/system/bin/linker64";
+        libdl_path = "/system/lib64/libdl.so";
     }
 
-    printf("[+] linker_path value:%s\n", linker_path);
+    printf("[+] libdl_path value:%s\n", libdl_path);
 
-    uint64_t local_base = find_module_base(-1, linker_path);
-    uint64_t remote_base = find_module_base(pid, linker_path);
+    uint64_t local_base = find_module_base(-1, libdl_path);
+    uint64_t remote_base = find_module_base(pid, libdl_path);
     if (local_base == 0 || remote_base == 0) return 0;
 
     uint64_t local_func = (uint64_t)dlopen;
@@ -155,13 +155,13 @@ uint64_t get_remote_dlsym_addr(pid_t pid) {
     __system_property_get("ro.build.version.sdk", sdk_str);
     int sdk = atoi(sdk_str);
 
-    const char* linker_path = "/apex/com.android.runtime/bin/linker64";
+    const char* libdl_path = "/apex/com.android.runtime/lib64/bionic/libdl.so";
     if (sdk < 0x18) {
-        linker_path = "/system/bin/linker64";
+        libdl_path = "/system/lib64/libdl.so";
     }
 
-    uint64_t local_base = find_module_base(-1, linker_path);
-    uint64_t remote_base = find_module_base(pid, linker_path);
+    uint64_t local_base = find_module_base(-1, libdl_path);
+    uint64_t remote_base = find_module_base(pid, libdl_path);
     if (local_base == 0 || remote_base == 0) return 0;
 
     uint64_t local_func = (uint64_t)dlsym;
@@ -179,13 +179,13 @@ uint64_t get_remote_dlclose_addr(pid_t pid) {
     __system_property_get("ro.build.version.sdk", sdk_str);
     int sdk = atoi(sdk_str);
 
-    const char* linker_path = "/apex/com.android.runtime/bin/linker64";
+    const char* libdl_path = "/apex/com.android.runtime/lib64/bionic/libdl.so";
     if (sdk < 0x18) {
-        linker_path = "/system/bin/linker64";
+        libdl_path = "/system/lib64/libdl.so";
     }
 
-    uint64_t local_base = find_module_base(-1, linker_path);
-    uint64_t remote_base = find_module_base(pid, linker_path);
+    uint64_t local_base = find_module_base(-1, libdl_path);
+    uint64_t remote_base = find_module_base(pid, libdl_path);
     if (local_base == 0 || remote_base == 0) return 0;
 
     uint64_t local_func = (uint64_t)dlclose;
@@ -203,13 +203,13 @@ uint64_t get_remote_dlerror_addr(pid_t pid) {
     __system_property_get("ro.build.version.sdk", sdk_str);
     int sdk = atoi(sdk_str);
 
-    const char* linker_path = "/apex/com.android.runtime/bin/linker64";
+    const char* libdl_path = "/apex/com.android.runtime/lib64/bionic/libdl.so";
     if (sdk < 0x18) {
-        linker_path = "/system/bin/linker64";
+        libdl_path = "/system/lib64/libdl.so";
     }
 
-    uint64_t local_base = find_module_base(-1, linker_path);
-    uint64_t remote_base = find_module_base(pid, linker_path);
+    uint64_t local_base = find_module_base(-1, libdl_path);
+    uint64_t remote_base = find_module_base(pid, libdl_path);
     if (local_base == 0 || remote_base == 0) return 0;
 
     uint64_t local_func = (uint64_t)dlerror;
@@ -410,7 +410,7 @@ bool inject_process(pid_t pid, const char* lib_path, const char* symbol_name) {
         return false;
     }
 
-    uint64_t dlopen_args[2] = { map_addr, RTLD_NOW };
+    uint64_t dlopen_args[2] = { map_addr, 0x102 };
     if (call_remote_function(pid, dlopen_addr, dlopen_args, 2, &regs) != 0) {
         printf("[+] Call Remote dlopen Func Failed\n");
         recover_regs(pid, &orig_regs);
@@ -442,7 +442,7 @@ bool inject_process(pid_t pid, const char* lib_path, const char* symbol_name) {
         return false;
     }
 
-    if (symbol_name == nullptr || strcmp(symbol_name, "symbols") == 0) {
+    if (symbol_name == nullptr || strlen(symbol_name) == 0 || strcmp(symbol_name, "symbols") == 0) {
         printf("[+] No func !!\n");
     } else {
         printf("[+] func symbols is %s\n", symbol_name);
@@ -476,12 +476,6 @@ bool inject_process(pid_t pid, const char* lib_path, const char* symbol_name) {
                 return false;
             }
         }
-    }
-
-    if (dlclose_addr != 0) {
-        printf("[+] dlclose RemoteFuncAddr:0x%lx\n", (unsigned long)dlclose_addr);
-        uint64_t dlclose_args[1] = { handle };
-        call_remote_function(pid, dlclose_addr, dlclose_args, 1, &regs);
     }
 
     if (recover_regs(pid, &orig_regs)) {
